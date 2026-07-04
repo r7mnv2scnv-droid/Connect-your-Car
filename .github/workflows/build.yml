@@ -23,16 +23,16 @@ jobs:
         # Erstellt die Ordnerstruktur für die spätere Installation
         mkdir -p build/Payload
         
-        # Findet AUTOMATISCH den Namen des korrekten Schemes heraus
+        # Findet den Namen des korrekten Schemes heraus
         SCHEME_NAME=$(xcodebuild -workspace "$SWFTPM_DIR" -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)
         echo "Erkanntes Scheme: $SCHEME_NAME"
         
-        # Baut das Playground-Projekt mit dem dynamisch gefundenen Scheme
+        # Baut das Playground-Projekt mit Destination-Angabe (behebt Exit Code 70)
         xcodebuild archive \
           -workspace "$SWFTPM_DIR" \
           -scheme "$SCHEME_NAME" \
           -configuration Release \
-          -sdk iphoneos \
+          -destination 'generic/platform=iOS' \
           -archivePath ./build/App.xcarchive \
           CODE_SIGNING_ALLOWED=NO \
           CODE_SIGNING_REQUIRED=NO
