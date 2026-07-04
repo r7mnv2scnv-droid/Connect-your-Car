@@ -4,7 +4,7 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v4  # Aktualisiert (behebt die Node.js Warnung!)
+    - uses: actions/checkout@v4
     
     - name: Set up Xcode
       run: sudo xcode-select -s /Applications/Xcode.app
@@ -12,13 +12,30 @@ jobs:
     - name: Unzip Project
       run: |
         unzip -o *.zip
-        ls -la  # Zeigt im Protokoll an, was entpackt wurde (gut zur Fehlersuche)
         
-    - name: Build IPA
+    - name: Build App
       run: |
-        # Dieser Befehl sucht automatisch nach dem .swiftpm Ordner, egal wo er liegt
+        # Findet das Projekt, egal wie viele Leerzeichen im Namen sind
+        IFS=$'\n'
         SWFTPM_DIR=$(find . -name "*.swiftpm" -type d | head -n 1)
-        echo "Gefundenes Projekt: $SWFTPM_DIR"
+        echo "Kompiliere Projekt: $SWFTPM_DIR"
         
-        xcodebuild -archivePath ./build/App.xcarchive archive -project "$SWFTPM_DIR" -scheme App
-        xcodebuild -exportArchive -archivePath ./build/App.xcarchive -exportPath ./build/Export -exportOptionsPlist "$SWFTPM_DIR/ExportOptions.plist" || true
+        # Erstellt den Build-Ordner
+        mkdir -p build/Payload
+        
+        # Baut das Projekt direkt als ausführbare App
+        xcodebuild build -project "$SWFTPM_DIR" -scheme App -configuration Release -derivedDataPath ./derivedData
+        
+        # Sucht die fertige .app Datei und packt sie in den Payload-Ordner für das iPhone
+        APP_PATH=$(find ./derivedData -name "*.app" -type d | head -n 1)
+        cp -R "$APP_PATH" build/Payload/
+        
+        # Verwandelt den Ordner in eine echte .ipa Datei
+        cd build
+        zip -r App.ipa Payload
+        
+    - name: Upload IPA Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: iPhone-App
+        path: build/App.ipa
