@@ -23,11 +23,14 @@ jobs:
         # Erstellt die Ordnerstruktur für die spätere Installation
         mkdir -p build/Payload
         
-        # Baut das Playground-Projekt direkt über Xcode mit dem korrekten SDK
-        # Das umgeht den "AppleProductTypes" Fehler komplett!
+        # Findet AUTOMATISCH den Namen des korrekten Schemes heraus
+        SCHEME_NAME=$(xcodebuild -workspace "$SWFTPM_DIR" -list | grep -A 1 "Schemes:" | tail -n 1 | xargs)
+        echo "Erkanntes Scheme: $SCHEME_NAME"
+        
+        # Baut das Playground-Projekt mit dem dynamisch gefundenen Scheme
         xcodebuild archive \
           -workspace "$SWFTPM_DIR" \
-          -scheme App \
+          -scheme "$SCHEME_NAME" \
           -configuration Release \
           -sdk iphoneos \
           -archivePath ./build/App.xcarchive \
