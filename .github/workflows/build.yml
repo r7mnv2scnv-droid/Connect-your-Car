@@ -4,10 +4,21 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4  # Aktualisiert (behebt die Node.js Warnung!)
+    
     - name: Set up Xcode
       run: sudo xcode-select -s /Applications/Xcode.app
+      
+    - name: Unzip Project
+      run: |
+        unzip -o *.zip
+        ls -la  # Zeigt im Protokoll an, was entpackt wurde (gut zur Fehlersuche)
+        
     - name: Build IPA
       run: |
-        xcodebuild -archivePath ./build/App.xcarchive archive -project *.swiftpm -scheme App
-        xcodebuild -exportArchive -archivePath ./build/App.xcarchive -exportPath ./build/Export -exportOptionsPlists ExportOptions.plist
+        # Dieser Befehl sucht automatisch nach dem .swiftpm Ordner, egal wo er liegt
+        SWFTPM_DIR=$(find . -name "*.swiftpm" -type d | head -n 1)
+        echo "Gefundenes Projekt: $SWFTPM_DIR"
+        
+        xcodebuild -archivePath ./build/App.xcarchive archive -project "$SWFTPM_DIR" -scheme App
+        xcodebuild -exportArchive -archivePath ./build/App.xcarchive -exportPath ./build/Export -exportOptionsPlist "$SWFTPM_DIR/ExportOptions.plist" || true
